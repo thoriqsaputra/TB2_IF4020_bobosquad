@@ -95,14 +95,20 @@ class ContractConfig {
   getContractABI() {
     const abiPath = path.join(
       process.cwd(),
-      "config",
-      "CertificateRegistry.abi"
+      "..",
+      "..",
+      "SmartContract",
+      "artifacts",
+      "contracts",
+      "CertificateRegistry.sol",
+      "CertificateRegistry.json"
     );
     if (fs.existsSync(abiPath)) {
       try {
-        return JSON.parse(fs.readFileSync(abiPath, "utf8"));
+        const artifact = JSON.parse(fs.readFileSync(abiPath, "utf8"));
+        return artifact.abi;
       } catch (error) {
-        console.warn("Could not load ABI file:", error.message);
+        console.warn("Could not load ABI from artifacts:", error.message);
       }
     }
     return null;

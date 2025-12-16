@@ -4,6 +4,7 @@ class ContractConfig {
   }
 
   loadConfig() {
+    // Environment variables (Vite prefix) - browser compatible
     const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
     const rpcUrl = import.meta.env.VITE_RPC_URL;
     const network = import.meta.env.VITE_NETWORK;
@@ -13,21 +14,21 @@ class ContractConfig {
     return {
       contract: {
         address: contractAddress || "",
-        network: network || "sepolia",
+        network: network || "localhost",
         chainId: network === "localhost" ? 1337 : 11155111,
       },
       network: {
-        rpcUrl: rpcUrl || "https://sepolia.infura.io/v3/YOUR_INFURA_KEY",
+        rpcUrl: rpcUrl || "http://127.0.0.1:8545",
         blockExplorer:
           network === "localhost"
             ? "http://localhost:3000"
             : "https://sepolia.etherscan.io",
       },
       backend: {
-        url: backendUrl || "http://localhost:3001",
+        url: backendUrl || "http://localhost:3000",
       },
       ipfs: {
-        gateway: ipfsGateway || "https://gateway.pinata.cloud",
+        gateway: ipfsGateway || "http://localhost:8080",
       },
     };
   }
