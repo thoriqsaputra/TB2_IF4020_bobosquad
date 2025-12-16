@@ -3,6 +3,7 @@ import cors from "cors";
 import { nanoid } from "nanoid";
 import { verifyMessage } from "ethers";
 import pkg from "pg";
+import contractConfig from "./config/contract.js";
 
 const { Pool } = pkg;
 
@@ -23,7 +24,6 @@ app.use(
 );
 app.use(express.json());
 
-// Health check (also validates DB connectivity)
 app.get("/health", async (_, res) => {
   try {
     await pool.query("SELECT 1");
@@ -33,7 +33,23 @@ app.get("/health", async (_, res) => {
   }
 });
 
-// GET /auth/nonce?address=0x...
+app.get("/contract/info", (req, res) => {
+  try {
+    const contractInfo = contractConfig.getFullConfig();
+    res.json({
+      status: "ok",
+      contract: contractInfo.contract,
+      network: contractInfo.network,
+      ipfs: contractInfo.ipfs,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error: "Failed to load contract configuration",
+    });
+  }
+});
+
 app.get("/auth/nonce", async (req, res) => {
   try {
     const { address } = req.query;
@@ -55,57 +71,32 @@ app.get("/auth/nonce", async (req, res) => {
   }
 });
 
-// POST /auth/verify { address, signature }
 app.post("/auth/verify", async (req, res) => {
   try {
-    const { address, signature } = req.body || {};
-    if (!address || !signature)
-      return res
-        .status(400)
-        .json({ error: "Address and signature are required" });
+    const { address, signature } = req.body;
+    if (!address || !signature) {
+      return res.status(400).json({ error: "Address and signature required" });
+    }
     const normalized = String(address).toLowerCase();
     const result = await pool.query(
       "SELECT nonce FROM nonces WHERE address = $1",
       [normalized]
     );
-    if (result.rowCount === 0)
-      return res
-        .status(400)
-        .json({ error: "Nonce not found. Request a new one." });
+    if (!result.rows.length) {
+      return res.status(401).json({ error: "Nonce not found" });
+    }
     const { nonce } = result.rows[0];
-
     const recovered = verifyMessage(nonce, signature).toLowerCase();
     if (recovered !== normalized) {
       return res.status(401).json({ error: "Invalid signature" });
     }
-
-    await pool.query("DELETE FROM nonces WHERE address = $1", [normalized]);
-    // For demo purposes, return a mock token; replace with JWT/session in production
-    res.json({ token: `mock-token-${normalized.slice(2, 8)}` });
+    res.json({ success: true });
   } catch (err) {
     console.error("Verify error", err);
     res.status(500).json({ error: "Verification failed" });
   }
 });
 
-// Run migration on startup
-const runMigration = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS nonces (
-        address TEXT PRIMARY KEY,
-        nonce TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-    `);
-    console.log("Database migration completed");
-  } catch (err) {
-    console.error("Migration failed", err);
-    process.exit(1);
-  }
-};
-
-app.listen(PORT, async () => {
-  await runMigration();
-  console.log(`Backend listening on http://localhost:${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

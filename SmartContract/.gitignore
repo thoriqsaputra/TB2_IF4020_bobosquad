@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+
+# Hardhat files
+cache/
+artifacts/
+typechain-types/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deployment files
+deployment-info.json
+
+# Coverage
+coverage/
+coverage.json

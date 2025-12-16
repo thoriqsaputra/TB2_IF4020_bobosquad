@@ -1,0 +1,33 @@
+# Contract Deployer - Lightweight Node.js
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ git
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy contract and deployment files
+COPY contracts ./contracts
+COPY scripts ./scripts
+COPY hardhat.config.js ./
+
+# Create shared config directory
+RUN mkdir -p /shared-config
+
+# Expose deployment file location
+VOLUME ["/app/deployment.json", "/shared-config"]
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV DEPLOY_MODE=reuse
+ENV FORCE_DEPLOY=false
+
+# Run smart deployment
+CMD ["node", "scripts/deploy-smart.js"]
