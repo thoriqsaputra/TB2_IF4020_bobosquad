@@ -3,12 +3,8 @@
   "version": "1.0.0",
   "description": "Blockchain Certificate Management System",
   "scripts": {
-    "deploy:localhost": "node deploy-all.js localhost",
-    "deploy:sepolia": "node deploy-all.js sepolia",
-    "deploy": "node deploy-all.js localhost",
     "start:services": "docker-compose up -d",
     "stop:services": "docker-compose down",
-    "start:all": "npm run deploy && npm run start:services",
     "start:fe": "cd Frontend && npm start",
     "start:be": "cd Backend && npm start",
     "install:all": "npm install && cd Frontend && npm install && cd ../Backend && npm install && cd ../SmartContract && npm install",
