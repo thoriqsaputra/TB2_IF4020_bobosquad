@@ -5,9 +5,10 @@
   "main": "index.js",
   "scripts": {
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js --network sepolia",
-    "deploy:smart": "node scripts/deploy-smart.js",
-    "deploy:force": "FORCE_DEPLOY=true node scripts/deploy-smart.js",
+    "deploy": "hardhat run scripts/deploy-smart.js --network sepolia",
+    "deploy:sepolia": "hardhat run scripts/deploy-smart.js --network sepolia",
+    "deploy:localhost": "hardhat run scripts/deploy-smart.js --network localhost",
+    "deploy:force": "set FORCE_DEPLOY=true&& hardhat run scripts/deploy-smart.js --network sepolia",
     "deploy:check": "node -e \"console.log(JSON.parse(require('fs').readFileSync('deployment.json','utf8')))\"",
     "test": "hardhat test",
     "coverage": "hardhat coverage",
@@ -28,6 +29,7 @@
     "hardhat": "^2.19.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0"
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^17.2.3"
   }
 }

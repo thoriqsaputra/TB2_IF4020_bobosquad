@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import QRCode from 'react-qr-code';
-import { ShieldCheck, LinkIcon, Copy } from 'lucide-react';
+import { ShieldCheck, Copy } from 'lucide-react';
 import { Input } from '../common/Input';
 import { FileUpload } from '../common/FileUpload';
 import { Button } from '../common/Button';
