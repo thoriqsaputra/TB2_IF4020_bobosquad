@@ -5,15 +5,13 @@
   "scripts": {
     "start:services": "docker-compose up -d",
     "stop:services": "docker-compose down",
-    "start:fe": "cd Frontend && npm start",
+    "start:fe": "cd Frontend && npm run dev",
     "start:be": "cd Backend && npm start",
     "install:all": "npm install && cd Frontend && npm install && cd ../Backend && npm install && cd ../SmartContract && npm install",
     "test:contract": "cd SmartContract && npx hardhat test",
     "node:local": "cd SmartContract && npx hardhat node"
   },
-  "devDependencies": {
-    "hardhat": "^2.19.0"
-  },
+  "devDependencies": {},
   "keywords": [
     "blockchain",
     "certificate",

@@ -65,6 +65,7 @@ private-keys.json
 # Deployment files (auto-generated)
 deployment.json
 deployments/
+SmartContract/scripts/deployment.json
 
 # IPFS
 .ipfs/

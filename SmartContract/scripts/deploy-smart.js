@@ -1,4 +1,5 @@
 const { ethers, network } = require("hardhat");
+
 const fs = require("fs");
 const path = require("path");
 
@@ -99,7 +100,10 @@ class SmartDeployment {
       },
       network: {
         rpcUrl: network.config.url || "http://localhost:8545",
-        blockExplorer: network.config.blockExplorer || "https://localhost",
+        blockExplorer:
+          deployment.network === "sepolia"
+            ? "https://sepolia.etherscan.io"
+            : network.config.blockExplorer || "https://localhost",
       },
       ipfs: {
         gateway: "http://localhost:8080",

@@ -6,7 +6,7 @@
   },
   "network": {
     "rpcUrl": "https://sepolia.infura.io/v3/4fc554a498ed4f8e8abbf35c36318bbc",
-    "blockExplorer": "https://localhost"
+    "blockExplorer": "https://sepolia.etherscan.io"
   },
   "ipfs": {
     "gateway": "http://localhost:8080"

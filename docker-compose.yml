@@ -73,41 +73,15 @@ services:
     container_name: tb2-frontend
     ports:
       - "5173:5173"
-    environment:
-      - VITE_CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
-      - VITE_RPC_URL=${RPC_URL:-https://sepolia.infura.io/v3/YOUR_INFURA_KEY}
-      - VITE_IPFS_GATEWAY=http://localhost:8080
-      - VITE_BACKEND_URL=http://localhost:5000
-      - VITE_NETWORK=sepolia
     volumes:
       - ./Frontend:/app
       - /app/node_modules
-      - ./shared-config:/app/config:ro
     depends_on:
       - backend
     networks:
       - tb2-network
     restart: unless-stopped
 
-  # Smart Contract Deployer (One-time service)
-  contract-deployer:
-    build:
-      context: ./SmartContract
-      dockerfile: Dockerfile.deploy
-    container_name: tb2-contract-deployer
-    environment:
-      - PRIVATE_KEY=${PRIVATE_KEY}
-      - RPC_URL=${RPC_URL:-https://sepolia.infura.io/v3/YOUR_INFURA_KEY}
-      - DEPLOY_MODE=${DEPLOY_MODE:-reuse}
-      - FORCE_DEPLOY=${FORCE_DEPLOY:-false}
-    volumes:
-      - ./SmartContract/deployment.json:/app/deployment.json
-      - ./shared-config:/shared-config
-    networks:
-      - tb2-network
-    profiles:
-      - deploy # Only run with: docker-compose --profile deploy up contract-deployer
-    command: node scripts/deploy-smart.js
 
 networks:
   tb2-network:

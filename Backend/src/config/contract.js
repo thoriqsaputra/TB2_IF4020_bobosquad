@@ -27,11 +27,16 @@ class ContractConfig {
       }
     }
 
+    const chainId =
+      sharedConfig.contract?.chainId !== undefined
+        ? sharedConfig.contract.chainId
+        : 11155111;
+
     this.config = {
       contract: {
         address: contractAddress || sharedConfig.contract?.address || "",
         network: sharedConfig.contract?.network || "sepolia",
-        chainId: sharedConfig.contract?.chainId || 11155111,
+        chainId,
       },
       network: {
         rpcUrl:
@@ -39,7 +44,10 @@ class ContractConfig {
           sharedConfig.network?.rpcUrl ||
           "https://sepolia.infura.io/v3/YOUR_KEY",
         blockExplorer:
-          sharedConfig.network?.blockExplorer || "https://sepolia.etherscan.io",
+          Number(chainId) === 11155111
+            ? "https://sepolia.etherscan.io"
+            : sharedConfig.network?.blockExplorer ||
+              "https://sepolia.etherscan.io",
       },
       ipfs: {
         gateway:
@@ -81,37 +89,6 @@ class ContractConfig {
 
   getFullConfig() {
     return this.config;
-  }
-
-  getContractInfo() {
-    return {
-      address: this.config.contract.address,
-      abi: this.getContractABI(),
-      network: this.config.contract.network,
-      chainId: this.config.contract.chainId,
-    };
-  }
-
-  getContractABI() {
-    const abiPath = path.join(
-      process.cwd(),
-      "..",
-      "..",
-      "SmartContract",
-      "artifacts",
-      "contracts",
-      "CertificateRegistry.sol",
-      "CertificateRegistry.json"
-    );
-    if (fs.existsSync(abiPath)) {
-      try {
-        const artifact = JSON.parse(fs.readFileSync(abiPath, "utf8"));
-        return artifact.abi;
-      } catch (error) {
-        console.warn("Could not load ABI from artifacts:", error.message);
-      }
-    }
-    return null;
   }
 }
 
