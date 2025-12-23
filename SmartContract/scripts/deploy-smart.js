@@ -1,4 +1,4 @@
-const { ethers, network } = require("hardhat");
+const { ethers, network, run } = require("hardhat");
 
 const fs = require("fs");
 const path = require("path");
@@ -71,6 +71,9 @@ class SmartDeployment {
     const contractAddress = await certificateRegistry.getAddress();
     console.log("CertificateRegistry deployed to:", contractAddress);
 
+    const tx = certificateRegistry.deploymentTransaction();
+    const txHash = tx && tx.hash ? tx.hash : undefined;
+
     return {
       contractAddress,
       deployer: (await ethers.getSigners())[0].address,
@@ -79,6 +82,7 @@ class SmartDeployment {
       timestamp: new Date().toISOString(),
       gasUsed: "16777216",
       gasPrice: "0.000000001875",
+      txHash,
     };
   }
 
@@ -118,6 +122,38 @@ class SmartDeployment {
     console.log("Shared config updated");
   }
 
+  async verifyOnEtherscan(deployment) {
+    try {
+      if (deployment.network !== "sepolia") {
+        console.log("Etherscan verify skipped: non-sepolia network");
+        return;
+      }
+      if (!process.env.ETHERSCAN_API_KEY) {
+        console.log("Etherscan verify skipped: ETHERSCAN_API_KEY not set");
+        return;
+      }
+      if (deployment.txHash) {
+        console.log("Waiting for 5 block confirmations before verify...");
+        await ethers.provider.waitForTransaction(deployment.txHash, 5);
+      } else {
+        console.log("No deployment txHash available; proceeding to verify without wait.");
+      }
+      console.log("Verifying on Etherscan:", deployment.contractAddress);
+      await run("verify:verify", {
+        address: deployment.contractAddress,
+        constructorArguments: [],
+      });
+      console.log("Etherscan verification succeeded");
+    } catch (err) {
+      const msg = String(err && err.message ? err.message : err);
+      if (msg.includes("Already Verified") || msg.includes("Contract source code already verified")) {
+        console.log("Etherscan: contract already verified");
+        return;
+      }
+      console.warn("Etherscan verification failed:", msg);
+    }
+  }
+
   async main() {
     console.log("Smart deployment started");
     console.log("Mode:", this.mode);
@@ -130,6 +166,7 @@ class SmartDeployment {
     const deployment = await this.deployContract();
     this.saveDeployment(deployment);
     this.updateSharedConfig(deployment);
+    await this.verifyOnEtherscan(deployment);
 
     console.log("Smart deployment completed");
   }
