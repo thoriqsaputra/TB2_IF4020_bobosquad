@@ -5,7 +5,7 @@ import { CertificateCard } from "../components/certificate/CertificateCard";
 import { CertificateViewer } from "../components/certificate/CertificateViewer";
 import { LoadingSpinner } from "../components/common/LoadingSpinner";
 import { useCertificate } from "../hooks/useCertificate";
-import { mockCryptoService } from "../services/cryptoService";
+import { cryptoService } from "../services/cryptoService";
 import { getExplorerTx } from "../utils/helpers";
 
 export const ViewCertificate: React.FC = () => {
@@ -36,7 +36,7 @@ export const ViewCertificate: React.FC = () => {
       setLoadingFile(true);
       setError(null);
       try {
-        const res = await mockCryptoService.downloadCertificate({
+        const res = await cryptoService.downloadCertificate({
           ipfsCid: cid,
           aesKey,
         });

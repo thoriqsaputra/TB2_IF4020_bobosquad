@@ -6,7 +6,7 @@ import { Button } from '../components/common/Button';
 import { VerificationResult } from '../components/certificate/VerificationResult';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { useCertificate } from '../hooks/useCertificate';
-import { mockCryptoService } from '../services/cryptoService';
+import { cryptoService } from '../services/cryptoService';
 import { validateFile } from '../utils/validation';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 
@@ -32,7 +32,7 @@ export const VerifyCertificate: React.FC = () => {
     setIsLoading(true);
     try {
       const meta = await loadCertificate(Number(certificateId));
-      const fileOk = await mockCryptoService.verifyDocumentHash(file, meta.documentHash);
+      const fileOk = await cryptoService.verifyDocumentHash(file, meta.documentHash);
       const res = await verifyCertificate(Number(certificateId), meta.documentHash);
       if (!fileOk) {
         setError('Uploaded file hash does not match on-chain hash.');

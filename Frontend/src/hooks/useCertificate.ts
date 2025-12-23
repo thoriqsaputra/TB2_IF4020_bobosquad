@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useContract } from "./useContract";
-import { mockCryptoService } from "../services/cryptoService";
+import { cryptoService } from "../services/cryptoService";
 import type {
   PreparedCertificateView,
   StudentData,
@@ -63,12 +63,12 @@ export const useCertificate = () => {
       setIssueProgress("preparing");
       setIssueError(null);
       try {
-        const prepared = await mockCryptoService.prepareCertificate({
+        const prepared = await cryptoService.prepareCertificate({
           certificateFile,
           studentData,
         });
         setIssueProgress("encrypting");
-        const signature = await mockCryptoService.generateCertificateSignature({
+        const signature = await cryptoService.generateCertificateSignature({
           documentHash: prepared.documentHash,
           ipfsCid: prepared.ipfsCid,
           issuerPrivateKey: "PLACEHOLDER", // Integration: replace with secure signer
@@ -111,7 +111,7 @@ export const useCertificate = () => {
     async (certificateId: number, reason: string) => {
       setRevokeStatus({ loading: true });
       try {
-        const signature = await mockCryptoService.generateCertificateSignature({
+        const signature = await cryptoService.generateCertificateSignature({
           documentHash: certificateId.toString(),
           ipfsCid: reason,
           issuerPrivateKey: "PLACEHOLDER",

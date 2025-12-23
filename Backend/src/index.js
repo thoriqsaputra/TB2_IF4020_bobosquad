@@ -139,12 +139,100 @@ app.get("/contract/verify", async (req, res) => {
     };
     const isValid =
       !details.isRevoked &&
-      String(details.documentHash).toLowerCase() ===
-        documentHash.toLowerCase();
+      String(details.documentHash).toLowerCase() === documentHash.toLowerCase();
     res.json({ isValid, details });
   } catch (err) {
     console.error("Contract verify error", err);
     res.status(500).json({ error: "Verification failed" });
+  }
+});
+
+app.get("/contract/certificate/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!id) return res.status(400).json({ error: "id required" });
+    const provider = new JsonRpcProvider(contractConfig.getRpcUrl());
+    const contract = new Contract(
+      contractConfig.getContractAddress(),
+      getAbi(),
+      provider
+    );
+    const cert = await contract.getCertificate(id);
+    const details = {
+      documentHash: cert.documentHash,
+      ipfsCid: cert.ipfsCid,
+      issuer: cert.issuer,
+      timestamp: Number(cert.timestamp),
+      isRevoked: Boolean(cert.isRevoked),
+      revokeReason: cert.revokeReason,
+    };
+    res.json({ status: "ok", details });
+  } catch (err) {
+    console.error("Contract certificate error", err);
+    res.status(500).json({ error: "Failed to load certificate" });
+  }
+});
+
+app.get("/contract/transactions", async (req, res) => {
+  try {
+    const provider = new JsonRpcProvider(contractConfig.getRpcUrl());
+    const contract = new Contract(
+      contractConfig.getContractAddress(),
+      getAbi(),
+      provider
+    );
+    const latest = await provider.getBlockNumber();
+    const from = Math.max(0, latest - 20000);
+    const issued = await contract.queryFilter(
+      contract.filters.CertificateIssued(),
+      from,
+      latest
+    );
+    const revoked = await contract.queryFilter(
+      contract.filters.CertificateRevoked(),
+      from,
+      latest
+    );
+    const txs = [];
+    for (const ev of issued) {
+      const b = await provider.getBlock(ev.blockHash);
+      let certificateId = 0;
+      try {
+        const parsed = contract.interface.parseLog(ev);
+        if (parsed?.name === "CertificateIssued") {
+          certificateId = Number(parsed.args.certificateId);
+        }
+      } catch {}
+      txs.push({
+        txHash: ev.transactionHash,
+        type: "ISSUE",
+        certificateId,
+        timestamp: Number(b?.timestamp || 0),
+        status: "SUCCESS",
+      });
+    }
+    for (const ev of revoked) {
+      const b = await provider.getBlock(ev.blockHash);
+      let certificateId = 0;
+      try {
+        const parsed = contract.interface.parseLog(ev);
+        if (parsed?.name === "CertificateRevoked") {
+          certificateId = Number(parsed.args.certificateId);
+        }
+      } catch {}
+      txs.push({
+        txHash: ev.transactionHash,
+        type: "REVOKE",
+        certificateId,
+        timestamp: Number(b?.timestamp || 0),
+        status: "SUCCESS",
+      });
+    }
+    txs.sort((a, b) => b.timestamp - a.timestamp);
+    res.json({ status: "ok", transactions: txs });
+  } catch (err) {
+    console.error("Contract transactions error", err);
+    res.status(500).json({ error: "Failed to load transactions" });
   }
 });
 
