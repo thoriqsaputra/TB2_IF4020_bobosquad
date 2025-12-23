@@ -14,4 +14,5 @@ export interface CryptoService {
   verifyDocumentHash(file: File | Blob, expectedHash: string): Promise<boolean>;
   uploadToStorage?(encryptedFile: Blob): Promise<{ url: string; size: number }>;
   generateIssuerKeys?(): Promise<{ privateKey: string; publicKey: string; address: string }>;
+  embedCertificateUrl(file: Blob, certificateUrl: string): Promise<Blob>;
 }

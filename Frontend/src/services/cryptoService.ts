@@ -2,6 +2,7 @@ import type { CryptoService, PreparedCertificate } from "../types/crypto";
 import type { StudentData } from "../types/certificate";
 import { ethers } from "ethers";
 import { CONFIG } from "../config/config";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -59,6 +60,11 @@ export const mockCryptoService: CryptoService = {
     await delay(300);
     // Mock: accept hashes that end with 'c'
     return expectedHash.endsWith("c");
+  },
+  async embedCertificateUrl(file: Blob, _certificateUrl: string) {
+    await delay(200);
+    const buf = await file.arrayBuffer();
+    return new Blob([buf], { type: file.type || "application/octet-stream" });
   },
 };
 
@@ -226,5 +232,62 @@ export const cryptoService: CryptoService = {
     const url = `${gateway}/ipfs/${cid}`;
     const size = encryptedFile.size;
     return { url, size };
+  },
+  async embedCertificateUrl(file: Blob, certificateUrl: string) {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const mimeType = detectMimeType(bytes);
+    if (mimeType === "application/pdf") {
+      const pdf = await PDFDocument.load(bytes);
+      const page = pdf.getPages()[0];
+      const font = await pdf.embedFont(StandardFonts.Helvetica);
+      const text = `Certificate URL: ${certificateUrl}`;
+      page.drawText(text, {
+        x: 40,
+        y: 40,
+        size: 10,
+        font,
+        color: rgb(0, 0.4, 0.8),
+      });
+      const out = await pdf.save();
+      const ab = new ArrayBuffer(out.byteLength);
+      const view = new Uint8Array(ab);
+      view.set(out);
+      return new Blob([ab], { type: "application/pdf" });
+    }
+    if (mimeType === "image/png" || mimeType === "image/jpeg") {
+      const imgUrl = URL.createObjectURL(file);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = imgUrl;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return file;
+      ctx.drawImage(img, 0, 0);
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      const pad = 12;
+      const text = `Certificate URL: ${certificateUrl}`;
+      ctx.font = "20px sans-serif";
+      const textWidth = ctx.measureText(text).width;
+      const boxWidth = textWidth + pad * 2;
+      const boxHeight = 32 + pad;
+      ctx.fillRect(pad, canvas.height - boxHeight - pad, boxWidth, boxHeight);
+      ctx.fillStyle = "white";
+      ctx.fillText(text, pad * 2, canvas.height - pad * 2);
+      const dataUrl = canvas.toDataURL(mimeType);
+      const res = await fetch(dataUrl);
+      const outBuf = await res.arrayBuffer();
+      return new Blob([outBuf], { type: mimeType });
+    }
+    if (mimeType === "text/plain") {
+      const text = await file.text();
+      const appended = `${text}\n\nCertificate URL: ${certificateUrl}\n`;
+      return new Blob([appended], { type: "text/plain" });
+    }
+    return file;
   },
 };

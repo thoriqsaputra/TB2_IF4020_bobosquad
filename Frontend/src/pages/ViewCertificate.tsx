@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Download, ExternalLink } from "lucide-react";
 import { CertificateCard } from "../components/certificate/CertificateCard";
@@ -22,6 +22,14 @@ export const ViewCertificate: React.FC = () => {
   const txHash = search.get("tx") || undefined;
 
   const { loadCertificate, certificateMeta } = useCertificate();
+  const certificateUrl = useMemo(() => {
+    const origin =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://yourapp.com";
+    if (!certificateId || !cid || !aesKey || !txHash) return undefined;
+    return `${origin}/certificate?id=${certificateId}&cid=${cid}&key=${aesKey}&tx=${txHash}`;
+  }, [certificateId, cid, aesKey, txHash]);
 
   useEffect(() => {
     if (!certificateId) return;
@@ -118,6 +126,36 @@ export const ViewCertificate: React.FC = () => {
                 <Download className="mr-2 h-4 w-4" />
                 Download Certificate
               </a>
+              {certificateUrl && (
+                <button
+                  className="inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                  onClick={async () => {
+                    try {
+                      if (!fileUrl) return;
+                      const resp = await fetch(fileUrl);
+                      const blob = await resp.blob();
+                      const embedded = await cryptoService.embedCertificateUrl(
+                        blob,
+                        certificateUrl
+                      );
+                      const url = URL.createObjectURL(embedded);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = `certificate-with-url-${certificateId}`;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      URL.revokeObjectURL(url);
+                    } catch (err) {
+                      console.error(err);
+                      setError("Failed to embed certificate URL");
+                    }
+                  }}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download with URL
+                </button>
+              )}
             </div>
           )}
         </div>
