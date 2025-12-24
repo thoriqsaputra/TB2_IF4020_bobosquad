@@ -111,15 +111,9 @@ export const useCertificate = () => {
     async (certificateId: number, reason: string) => {
       setRevokeStatus({ loading: true });
       try {
-        const signature = await cryptoService.generateCertificateSignature({
-          documentHash: certificateId.toString(),
-          ipfsCid: reason,
-          issuerPrivateKey: "PLACEHOLDER",
-        });
         const res = await contract.revokeCertificate({
           certificateId,
           reason,
-          signature,
         });
         setRevokeStatus({ loading: false, successTx: res.transactionHash });
         return res;

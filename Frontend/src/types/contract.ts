@@ -22,7 +22,6 @@ export interface IssueCertificateResult {
 export interface RevokeCertificateParams {
   certificateId: number;
   reason: string;
-  signature: string;
 }
 
 export interface VerifyCertificateResult {

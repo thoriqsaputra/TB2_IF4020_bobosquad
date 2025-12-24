@@ -8,7 +8,7 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 5000
+EXPOSE 3000
 
 # Run migrations then start the dev server (nodemon)
 CMD ["sh", "-c", "node src/migrate.js && npm run dev"]

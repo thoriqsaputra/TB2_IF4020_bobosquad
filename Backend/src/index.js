@@ -99,16 +99,178 @@ app.post("/auth/verify", async (req, res) => {
   }
 });
 
-const getAbi = () => {
-  const abiPath = path.join(
-    process.cwd(),
-    "..",
-    "SmartContract",
-    "abi",
-    "CertificateRegistry.abi.json"
-  );
-  return JSON.parse(fs.readFileSync(abiPath, "utf8"));
-};
+const ABI = [
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "certificateId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "documentHash",
+        type: "bytes32",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "ipfsCid",
+        type: "string",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "issuer",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "timestamp",
+        type: "uint256",
+      },
+    ],
+    name: "CertificateIssued",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "certificateId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "issuer",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "string",
+        name: "reason",
+        type: "string",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "timestamp",
+        type: "uint256",
+      },
+    ],
+    name: "CertificateRevoked",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "previousOwner",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newOwner",
+        type: "address",
+      },
+    ],
+    name: "OwnershipTransferred",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "getCertificateCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "bytes32", name: "documentHash", type: "bytes32" },
+      { internalType: "string", name: "ipfsCid", type: "string" },
+      { internalType: "uint8", name: "v", type: "uint8" },
+      { internalType: "bytes32", name: "r", type: "bytes32" },
+      { internalType: "bytes32", name: "s", type: "bytes32" },
+    ],
+    name: "issueCertificate",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "certificateId", type: "uint256" },
+    ],
+    name: "getCertificate",
+    outputs: [
+      { internalType: "bytes32", name: "documentHash", type: "bytes32" },
+      { internalType: "string", name: "ipfsCid", type: "string" },
+      { internalType: "address", name: "issuer", type: "address" },
+      { internalType: "uint256", name: "timestamp", type: "uint256" },
+      { internalType: "bool", name: "isRevoked", type: "bool" },
+      { internalType: "string", name: "revokeReason", type: "string" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "certificateId", type: "uint256" },
+      { internalType: "bytes32", name: "documentHash", type: "bytes32" },
+      { internalType: "string", name: "ipfsCid", type: "string" },
+    ],
+    name: "verifyCertificate",
+    outputs: [
+      { internalType: "bool", name: "isValid", type: "bool" },
+      { internalType: "string", name: "message", type: "string" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "certificateId", type: "uint256" },
+      { internalType: "string", name: "reason", type: "string" },
+    ],
+    name: "revokeCertificate",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "owner",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "renounceOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "address", name: "newOwner", type: "address" }],
+    name: "transferOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
+
+const getAbi = () => ABI;
 
 app.get("/contract/verify", async (req, res) => {
   try {
@@ -235,6 +397,41 @@ app.get("/contract/transactions", async (req, res) => {
     res.status(500).json({ error: "Failed to load transactions" });
   }
 });
+
+app.post(
+  "/ipfs/add",
+  express.raw({ type: "application/octet-stream", limit: "20mb" }),
+  async (req, res) => {
+    try {
+      const bytes = req.body;
+      if (!bytes || !bytes.length) {
+        return res.status(400).json({ error: "Empty body" });
+      }
+      const apiUrl = "http://ipfs:5001/api/v0/add?pin=true";
+      const form = new FormData();
+      const blob = new Blob([bytes], { type: "application/octet-stream" });
+      form.append("file", blob, "certificate.enc");
+      const resp = await fetch(apiUrl, { method: "POST", body: form });
+      if (!resp.ok) {
+        const t = await resp.text();
+        return res
+          .status(502)
+          .json({ error: "IPFS upload failed", details: t.slice(0, 500) });
+      }
+      const text = await resp.text();
+      const lines = text.trim().split("\n");
+      const last = JSON.parse(lines[lines.length - 1]);
+      const cid = last.Hash || last.cid || (last.Cid && last.Cid["/"]);
+      if (!cid) {
+        return res.status(500).json({ error: "IPFS returned no CID" });
+      }
+      res.json({ cid });
+    } catch (err) {
+      console.error("IPFS add error", err);
+      res.status(500).json({ error: "Failed to upload to IPFS" });
+    }
+  }
+);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

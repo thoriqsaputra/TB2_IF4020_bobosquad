@@ -151,18 +151,14 @@ const encryptBlob = async (blob: Blob, keyBase64: string) => {
 };
 
 const uploadToIpfs = async (blob: Blob) => {
-  const { api } = await resolveIpfsEndpoints();
-  const form = new FormData();
-  form.append("file", blob, "certificate.enc");
-  const res = await fetch(`${api}/api/v0/add?pin=true`, {
+  const res = await fetch(`${CONFIG.BACKEND_URL}/ipfs/add`, {
     method: "POST",
-    body: form,
+    headers: { "Content-Type": "application/octet-stream" },
+    body: blob,
   });
   if (!res.ok) throw new Error("IPFS upload failed");
-  const text = await res.text();
-  const lines = text.trim().split("\n");
-  const last = JSON.parse(lines[lines.length - 1]);
-  const cid: string = last.Hash || last.cid || last.Cid?.["/"];
+  const data = await res.json();
+  const cid: string = String(data.cid || "");
   if (!cid) throw new Error("IPFS returned no CID");
   return cid;
 };
