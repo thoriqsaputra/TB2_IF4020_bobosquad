@@ -9,7 +9,7 @@ export const CONFIG = {
   // Backend base URL for nonce auth or helper APIs (set to your backend endpoint)
   BACKEND_URL: "http://localhost:3000",
   CONTRACT_ADDRESS: "0x4B45cb768531139A405071B58978a792317d8433",
-  ISSUER_ADDRESS: "0x24E2C6804642aAb8c509fb7c1a95CAD030CDcd66",
+  ISSUER_ADDRESS: "0xee509cd46f546414e06066e4cbcd130c16d514ad",
   SUPPORTED_FILE_TYPES: [
     "application/pdf",
     "image/jpeg",

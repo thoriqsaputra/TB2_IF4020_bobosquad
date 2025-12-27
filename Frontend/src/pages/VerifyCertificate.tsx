@@ -86,9 +86,6 @@ export const VerifyCertificate: React.FC = () => {
         <div className="mt-4">
           <VerificationResult isValid={verifyStatus.isValid && !error} details={certificateMeta} />
         </div>
-        <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
-          PLACEHOLDER: integrate Person 1 verifyCertificate and Person 3 hash verification.
-        </div>
       </div>
     </div>
   );

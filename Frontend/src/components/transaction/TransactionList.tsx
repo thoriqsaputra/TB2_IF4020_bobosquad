@@ -87,9 +87,6 @@ export const TransactionList: React.FC<Props> = ({ transactions, loading, onRefr
           </tbody>
         </table>
       </div>
-      <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
-        PLACEHOLDER: replace mock transaction feed with Person 1 contract events.
-      </div>
     </div>
   );
 };

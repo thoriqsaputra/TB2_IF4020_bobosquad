@@ -131,9 +131,6 @@ export const CertificateForm: React.FC = () => {
               </div>
               <p className="mt-2 text-xs text-gray-500">Scan to view certificate</p>
             </div>
-            <div className="rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-800">
-              PLACEHOLDER: integrate Person 3 crypto module and Person 1 contract when available.
-            </div>
           </div>
         )}
       </div>
